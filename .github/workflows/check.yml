@@ -1,0 +1,60 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: What the applet is told to draw
+        run: node --test tests/
+      - name: engine/ is Headroom's release, byte for byte
+        run: tools/engine-sync --check
+
+  hygiene:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      # Personal-data guard: proves it can fail, then scans the tree. Allow list: .personal-data-allow
+      - run: tools/check-no-personal-data --self-test && tools/check-no-personal-data
+
+  # A bare Ubuntu 24.04 (what Pop!_OS 24.04 is built on) with only the packages the README names:
+  # if that line is missing something, this is where it shows.
+  install:
+    runs-on: ubuntu-24.04
+    container: ubuntu:24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install exactly what the README says to install
+        run: |
+          line="$(grep -m 1 '^sudo apt install ' README.md)"
+          test -n "$line"
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y ${line#sudo apt install }
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cache/headroom-cosmic-target
+          key: applet-${{ hashFiles('applet/Cargo.lock', 'applet/rust-toolchain.toml') }}
+      - name: The installer, start to finish, in a throwaway home folder
+        run: tests/install-check.sh

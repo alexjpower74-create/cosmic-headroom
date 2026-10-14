@@ -1,0 +1,2 @@
+# Python's Path.home() in Headroom's collectors (engine/, unchanged): a method call, not a LAN host name.
+^engine/gnome/collectors/[a-z-]+:[0-9]+: Path\.home$
