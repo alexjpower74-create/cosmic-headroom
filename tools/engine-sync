@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# engine/ is Steve Clarke's Headroom, copied unchanged from one of its releases. This keeps it so.
+#
+#   tools/engine-sync --check    fail if engine/ is not exactly that release's files
+#   tools/engine-sync            copy the files again from the release named in engine/UPSTREAM
+#   tools/engine-sync v1.3.0     move to another release (then run the tests and try the applet)
+#
+# engine/UPSTREAM names the repository, the release tag and the commit that tag pointed at. The
+# check compares against the commit, so a tag that is moved later does not pass unnoticed.
+set -u
+
+# What the applet needs from Headroom, at the paths Headroom keeps them.
+FILES=(
+  LICENSE
+  NOTICE
+  providers.json
+  Model.js
+  Pace.js
+  Costs.js
+  Wire.js
+  Providers.js
+  gnome/UsageService.js
+  gnome/collectors/headroom-collect
+  gnome/collectors/omarchy-agent-usage-claude
+  gnome/collectors/omarchy-agent-usage-codex
+  assets/claude.svg
+  assets/openai.svg
+)
+
+root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+engine="$root/engine"
+pin="$engine/UPSTREAM"
+
+value() { sed -n "s/^$1=//p" "$pin" 2>/dev/null | head -n 1; }
+
+mode=sync
+tag=""
+case "${1:-}" in
+  --check) mode=check ;;
+  -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  "") ;;
+  *) tag="$1" ;;
+esac
+
+repo="$(value repo)"
+[ -n "$repo" ] || { echo "engine-sync: $pin does not name a repository" >&2; exit 2; }
+[ -n "$tag" ] || tag="$(value tag)"
+[ -n "$tag" ] || { echo "engine-sync: $pin does not name a release tag" >&2; exit 2; }
+
+work="$(mktemp -d)"
+trap 'rm -rf -- "$work"' EXIT
+if ! git clone --quiet --depth 1 --branch "$tag" "$repo" "$work/upstream" 2>"$work/clone.log"; then
+  cat "$work/clone.log" >&2
+  echo "engine-sync: could not fetch $tag from $repo" >&2
+  exit 2
+fi
+commit="$(git -C "$work/upstream" rev-parse HEAD)"
+
+if [ "$mode" = sync ]; then
+  for file in "${FILES[@]}"; do
+    [ -f "$work/upstream/$file" ] || { echo "engine-sync: $tag has no $file" >&2; exit 2; }
+  done
+  find "$engine" -mindepth 1 ! -name README.md -delete 2>/dev/null
+  for file in "${FILES[@]}"; do
+    mkdir -p "$(dirname -- "$engine/$file")"
+    cp -p -- "$work/upstream/$file" "$engine/$file"
+  done
+  printf 'repo=%s\ntag=%s\ncommit=%s\n' "$repo" "$tag" "$commit" > "$pin"
+  echo "engine/ is now Headroom $tag ($commit)"
+  exit 0
+fi
+
+# --check: every difference is collected and counted, then the count decides.
+wrong=0
+problem() { echo "engine-sync: $1"; wrong=$((wrong + 1)); }
+
+pinned="$(value commit)"
+[ "$commit" = "$pinned" ] || problem "$tag is commit $commit upstream, but engine/UPSTREAM says $pinned"
+
+for file in "${FILES[@]}"; do
+  if [ ! -f "$engine/$file" ]; then
+    problem "engine/$file is missing"
+  elif ! cmp -s -- "$work/upstream/$file" "$engine/$file"; then
+    problem "engine/$file differs from Headroom $tag"
+  elif [ -x "$work/upstream/$file" ] && [ ! -x "$engine/$file" ]; then
+    problem "engine/$file should be executable"
+  fi
+done
+
+# Nothing else may live in engine/: a file of ours there would pass for Headroom's.
+while IFS= read -r found; do
+  known=0
+  for file in "${FILES[@]}" UPSTREAM README.md; do
+    [ "$found" = "$file" ] && known=1
+  done
+  [ "$known" = 1 ] || problem "engine/$found is not one of Headroom's files"
+done < <(cd -- "$engine" && find . -type f | sed 's|^\./||' | sort)
+
+if [ "$wrong" -gt 0 ]; then
+  echo "engine-sync: $wrong problem(s); engine/ is not Headroom $tag as released"
+  exit 1
+fi
+echo "engine/ matches Headroom $tag ($commit): ${#FILES[@]} files"

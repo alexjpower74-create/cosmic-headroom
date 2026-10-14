@@ -1,0 +1,33 @@
+{
+  "providers": [
+    {
+      "id": "claude",
+      "name": "Claude Code",
+      "shortName": "Claude",
+      "icon": "claude.svg",
+      "color": "#d77b5f",
+      "collector": "omarchy-agent-usage-claude",
+      "headline": "weekly",
+      "warningWindows": [
+        "weekly",
+        "fable-weekly"
+      ],
+      "costs": true,
+      "loginHint": "Run claude auth login, then refresh."
+    },
+    {
+      "id": "codex",
+      "name": "Codex",
+      "shortName": "Codex",
+      "icon": "openai.svg",
+      "color": "#279b80",
+      "collector": "omarchy-agent-usage-codex",
+      "headline": "weekly",
+      "warningWindows": [
+        "weekly"
+      ],
+      "costs": true,
+      "loginHint": "Run codex login, then refresh."
+    }
+  ]
+}
