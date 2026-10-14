@@ -1,0 +1,9 @@
+# What build.py assembles
+build/
+
+# Applet build output (install.sh builds outside the repository by default)
+target/
+
+__pycache__/
+*.log
+.DS_Store

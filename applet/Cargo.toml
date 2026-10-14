@@ -1,0 +1,27 @@
+[package]
+name = "cosmic-applet-headroom"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/alexjpower74-create/cosmic-headroom"
+publish = false
+description = "Headroom for the COSMIC panel: Claude Code and Codex quotas, reset countdowns and forecasts"
+
+[dependencies]
+# The same libcosmic revision as the applets COSMIC 1.10.0 ships (cosmic-applets 406d1b7), so this
+# applet and the panel it sits in agree. Cargo.lock started as that release's lock file.
+libcosmic = { git = "https://github.com/pop-os/libcosmic", rev = "5a8bd9482a35ae94c1e54edf77b331c6b970f170", default-features = false, features = [
+    "applet",
+    "multi-window",
+    "tokio",
+    "wayland",
+    "winit",
+] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1.49.0", features = ["full"] }
+
+[profile.release]
+opt-level = 3
+panic = "abort"
+lto = "thin"
