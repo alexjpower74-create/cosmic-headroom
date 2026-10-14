@@ -1,4 +1,4 @@
-// What the COSMIC applet is told to draw. Run: node --test tests/
+// What the COSMIC applet is told to draw. Run: node --test tests/*.test.cjs
 const assert = require('node:assert/strict');
 const {readFileSync} = require('node:fs');
 const vm = require('node:vm');

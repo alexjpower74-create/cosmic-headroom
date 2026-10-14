@@ -12,14 +12,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: What the applet is told to draw
-        run: node --test tests/
+        run: node --test tests/*.test.cjs
       - name: engine/ is Headroom's release, byte for byte
         run: tools/engine-sync --check
 
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       # Personal-data guard: proves it can fail, then scans the tree. Allow list: .personal-data-allow
@@ -40,7 +40,7 @@ jobs:
     container: ubuntu:24.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Install exactly what the README says to install
@@ -49,7 +49,7 @@ jobs:
           test -n "$line"
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y ${line#sudo apt install }
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry

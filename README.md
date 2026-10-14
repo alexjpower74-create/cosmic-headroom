@@ -81,9 +81,9 @@ For example, Claude only, with the 5-hour window beside the weekly one:
 ## Tests
 
 ```sh
-node --test tests/         # what the applet is told to draw, for 10 situations
-tools/engine-sync --check  # engine/ is Headroom v1.2.0, byte for byte
-tests/install-check.sh     # the installer, in a throwaway home folder
+node --test tests/*.test.cjs   # what the applet is told to draw, for 10 situations
+tools/engine-sync --check      # engine/ is Headroom v1.2.0, byte for byte
+tests/install-check.sh         # the installer, in a throwaway home folder
 ```
 
 `tests/install-check.sh` installs into a temporary home folder three times (a panel that has never
